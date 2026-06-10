@@ -1,0 +1,25 @@
+# Environment / secrets — NEVER commit these
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Tooling caches
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# uv
+# (uv.lock SHOULD be committed; do not ignore it)
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
