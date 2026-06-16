@@ -28,7 +28,18 @@ class LoginRequest(CamelModel):
 
 class TokenResponse(CamelModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"  # noqa: S105 — OAuth2 token type label, not a secret
+
+
+class RefreshRequest(CamelModel):
+    refresh_token: str
+
+
+class LogoutRequest(CamelModel):
+    # Optional: a client may log out without a stored refresh token (e.g. it was already
+    # cleared). When present, the token is revoked server-side.
+    refresh_token: str | None = None
 
 
 class RoleResponse(CamelModel):

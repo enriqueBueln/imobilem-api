@@ -39,7 +39,9 @@ class User(Base):
         nullable=False,
     )
 
-    roles: Mapped[list[Role]] = relationship(secondary=user_roles, lazy="selectin")
+    roles: Mapped[list[Role]] = relationship(
+        secondary=user_roles, lazy="selectin", order_by=Role.code
+    )
 
     @property
     def permissions(self) -> list[str]:

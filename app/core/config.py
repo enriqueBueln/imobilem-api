@@ -27,7 +27,11 @@ class Settings(BaseSettings):
     # Auth / JWT
     jwt_secret: str
     jwt_algorithm: str = "HS256"
-    access_token_expire_minutes: int = 60
+    # Short-lived access token: limits the blast radius of a leaked token. The app
+    # transparently rotates it via the refresh token, so the short TTL is invisible to users.
+    access_token_expire_minutes: int = 15
+    # Long-lived refresh token (rotated on every use, revocable server-side).
+    refresh_token_expire_minutes: int = 60 * 24 * 30  # 30 days
 
     # CORS — comma-separated list in the .env (the Expo app origins)
     cors_origins: str = "http://localhost:8081"

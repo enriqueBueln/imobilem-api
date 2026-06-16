@@ -20,7 +20,9 @@ from httpx import ASGITransport, AsyncClient  # noqa: E402
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine  # noqa: E402
 from sqlalchemy.pool import StaticPool  # noqa: E402
 
-import app.models.user  # noqa: E402,F401 — register the model on Base.metadata
+import app.models.authorization_event  # noqa: E402,F401 — register the model on Base.metadata
+import app.models.refresh_token  # noqa: E402,F401
+import app.models.user  # noqa: E402,F401
 from app.core.database import Base, get_session  # noqa: E402
 from app.core.rate_limit import reset_login_rate_limit  # noqa: E402
 from app.main import app  # noqa: E402

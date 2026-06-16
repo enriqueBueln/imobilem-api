@@ -97,3 +97,84 @@ async def test_me_rejects_expired_token(client, session):
     )
     response = await client.get("/auth/me", headers={"Authorization": f"Bearer {expired}"})
     assert response.status_code == 401
+
+
+async def _login(client) -> dict:
+    response = await client.post(
+        "/auth/login", json={"email": "staff@imobilem.com", "password": "secret123"}
+    )
+    assert response.status_code == 200
+    return response.json()
+
+
+async def test_login_returns_refresh_token(client, session):
+    await _seed_user(session)
+    body = await _login(client)
+    assert body["accessToken"]
+    assert body["refreshToken"]
+
+
+async def test_refresh_rotates_tokens(client, session):
+    await _seed_user(session)
+    first = await _login(client)
+
+    refreshed = await client.post(
+        "/auth/refresh", json={"refreshToken": first["refreshToken"]}
+    )
+    assert refreshed.status_code == 200
+    new_tokens = refreshed.json()
+    # A new, usable access token comes back...
+    me = await client.get(
+        "/auth/me", headers={"Authorization": f"Bearer {new_tokens['accessToken']}"}
+    )
+    assert me.status_code == 200
+    # ...and the refresh token rotated (single-use).
+    assert new_tokens["refreshToken"] != first["refreshToken"]
+
+    # The original refresh token is now revoked and cannot be exchanged again.
+    replay = await client.post(
+        "/auth/refresh", json={"refreshToken": first["refreshToken"]}
+    )
+    assert replay.status_code == 401
+
+
+async def test_refresh_reuse_revokes_whole_chain(client, session):
+    await _seed_user(session)
+    first = await _login(client)
+
+    second = await client.post(
+        "/auth/refresh", json={"refreshToken": first["refreshToken"]}
+    )
+    second_refresh = second.json()["refreshToken"]
+
+    # Replaying the already-rotated token is treated as theft: the whole chain is revoked,
+    # so even the legitimately-issued second token stops working.
+    replay = await client.post(
+        "/auth/refresh", json={"refreshToken": first["refreshToken"]}
+    )
+    assert replay.status_code == 401
+
+    after_theft = await client.post(
+        "/auth/refresh", json={"refreshToken": second_refresh}
+    )
+    assert after_theft.status_code == 401
+
+
+async def test_refresh_rejects_unknown_token(client, session):
+    await _seed_user(session)
+    response = await client.post("/auth/refresh", json={"refreshToken": "not-a-real-token"})
+    assert response.status_code == 401
+
+
+async def test_logout_revokes_refresh_token(client, session):
+    await _seed_user(session)
+    tokens = await _login(client)
+
+    logout = await client.post("/auth/logout", json={"refreshToken": tokens["refreshToken"]})
+    assert logout.status_code == 204
+
+    # After logout the refresh token is dead.
+    response = await client.post(
+        "/auth/refresh", json={"refreshToken": tokens["refreshToken"]}
+    )
+    assert response.status_code == 401

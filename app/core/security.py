@@ -10,6 +10,8 @@ not implemented here on purpose (a half-built version would be technical debt).
 """
 
 import datetime as dt
+import hashlib
+import secrets
 
 import jwt
 from pwdlib import PasswordHash
@@ -60,3 +62,15 @@ def decode_access_token(token: str) -> dict:
         options={"verify_exp": True},
         leeway=10,  # tolerate small clock skew between machines
     )
+
+
+def generate_refresh_token() -> str:
+    """Opaque, high-entropy refresh token. Returned to the client once; only its hash
+    is stored (see app/models/refresh_token.py)."""
+    return secrets.token_urlsafe(48)
+
+
+def hash_refresh_token(raw_token: str) -> str:
+    """SHA-256 hex digest used to look up / store a refresh token. A fast hash is correct
+    here (the input is already high-entropy random), unlike for user passwords."""
+    return hashlib.sha256(raw_token.encode("utf-8")).hexdigest()

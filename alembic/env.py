@@ -12,7 +12,9 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-import app.models.user  # noqa: F401 — import models so their tables register on Base
+import app.models.authorization_event  # noqa: F401 — import models so their tables register on Base
+import app.models.refresh_token  # noqa: F401
+import app.models.user  # noqa: F401
 from alembic import context
 from app.core.config import get_settings
 from app.core.database import Base
